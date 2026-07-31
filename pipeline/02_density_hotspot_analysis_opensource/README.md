@@ -46,15 +46,15 @@ GPS速度/平均航向变化"这个更完整的聚合，但因为分批统计的
 - **六边形网格**：`hex_utils.py`里标准的axial坐标算法直接向量化把点分配到六边形，
   不逐点做空间连接，千万级点也很快。`--hex-size`参数跟arcpy版语义一致(面积=
   hex_size^2平方米，不是边长)。
-- **北京市边界筛点**：用`boundary/省.shp`(2024年全国省市县三级行政区划数据，审图号
-  GS(2024)0650号，从`E:\2024年省市县三级行政区划数据...\省.shp`拷贝过来)提取北京市
+- **北京市边界筛点**：用`boundary/province.shp`(2024年全国省市县三级行政区划数据，审图号
+  GS(2024)0650号，从`E:\2024年省市县三级行政区划数据...\省.shp`拷贝过来，仓库里已重命名为英文文件名)提取北京市
   的面，`boundary_utils.py`用Shapely 2.0+的`contains_xy`做向量化点在多边形判断
   (内部有C实现的prepared geometry，千万级点可以跑得动)。这取代了最早版本"用一个
   经纬度矩形框圈研究区"的粗糙做法——矩形框会把跑到河北/天津境内但仍在框内的点也算
   进来，也会漏掉边界犬牙交错处框外但确实属于北京的点。**如果要分析其它城市，把
-  `boundary_utils.py`里筛选条件的"110000"/"北京市"换成对应省代码/名称即可**，省.shp
+  `boundary_utils.py`里筛选条件的"110000"/"北京市"换成对应省代码/名称即可**，province.shp
   本身是全国数据，不需要换文件。
-- **区县级边界**：`boundary/县.shp`(同一份行政区划数据的区县级)，`assign_beijing_district()`
+- **区县级边界**：`boundary/county.shp`(同一份行政区划数据的区县级)，`assign_beijing_district()`
   把点分配到北京市16个区之一(16个区各自一次向量化`contains_xy`查询，不是逐点循环)，
   给OD矩阵这类需要更粗空间聚合单元的分析用，见"OD分析"一节。
 - **内存安全**：所有阶段都用`pandas.read_csv(..., chunksize=2_000_000)`分块处理，
@@ -220,7 +220,7 @@ python 13_od_trip_extraction.py --hex-size 300
 
 基于`trips.csv`/`idle_segments.csv`可以做的分析（OD矩阵、流向图、距离时长分布、分
 时段OD对比、车辆利用率、供需匹配效率，编号14~16预留），空间聚合单元建议用北京市
-16个区(`boundary/县.shp`，用`boundary_utils.py`的`assign_beijing_district()`把
+16个区(`boundary/county.shp`，用`boundary_utils.py`的`assign_beijing_district()`把
 起讫点分配到区)而不是09/12默认的300米细六边形——细粒度网格做"格子对格子"的OD矩阵
 会导致绝大多数格子对之间只有0-1趟行程，统计上没有意义，流向图也看不清；行政区是
 更合适的聚合粒度。这几个分析脚本还没写，`trips.csv`/`idle_segments.csv`是它们共同
@@ -277,7 +277,7 @@ shapely 2.0的`STRtree`(R树空间索引)给每个点找最近的路网线段，
 
 **路网数据字段说明**：路网shapefile(`E:\summercamp\2017年北京市道路数据.shp`，OSM
 提取，56,431条线段，26种`fclass`)的`.dbf`是GBK编码，`.cpg`声明可能对不上(踩过
-跟`省.shp`/`县.shp`同样的坑)，脚本内部按几种编码依次尝试读取，不需要手动处理。
+跟`province.shp`/`county.shp`同样的坑)，脚本内部按几种编码依次尝试读取，不需要手动处理。
 
 **阈值怎么选，实测参考**：用50万行样本测试过，`--max-distance 30`(默认)匹配率
 65.5%，`--max-distance 100`匹配率84.7%——阈值放宽能覆盖更多点，但阈值越大，在
@@ -318,7 +318,7 @@ pip install -r requirements.txt
 export TAXI_CORE_CSV=/path/to/20170301_core.csv
 export TAXI_FEATURES_CSV=/path/to/20170301_core_features.csv
 export TAXI_OUT_DIR=/path/to/output
-export TAXI_BOUNDARY_SHP=/path/to/省.shp   # 默认用包内boundary/省.shp，一般不需要改
+export TAXI_BOUNDARY_SHP=/path/to/province.shp   # 默认用包内boundary/province.shp，一般不需要改
 ```
 
 ```bash

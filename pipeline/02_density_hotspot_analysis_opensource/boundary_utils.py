@@ -1,5 +1,5 @@
 r"""
-用省级/区县级行政区划矢量(省.shp/县.shp，2024年全国省市县三级行政区划数据，审图号
+用省级/区县级行政区划矢量(province.shp/county.shp，2024年全国省市县三级行政区划数据，审图号
 GS(2024)0650号)提取"点是否落在北京市行政边界内"、"点落在北京哪个区"，取代之前用一个
 粗糙经纬度矩形框(STUDY_AREA_WGS84)筛点的做法——矩形框会把跑到河北/天津境内但仍在
 矩形范围内的点也算进来，也会漏掉边界犬牙交错处矩形框外但确实属于北京的点，边界矢量
@@ -9,7 +9,7 @@ GS(2024)0650号)提取"点是否落在北京市行政边界内"、"点落在北�
 shapely.prepare()预处理加速重复查询)，千万级点也能跑得动，不需要逐点循环或者
 geopandas.sjoin那种更重的空间连接。
 
-区县级边界(县.shp)主要用途：OD矩阵/流向分析这类"格子对格子"的分析，如果用09/12脚本
+区县级边界(county.shp)主要用途：OD矩阵/流向分析这类"格子对格子"的分析，如果用09/12脚本
 默认的300米六边形做空间单元，绝大多数格子对之间只有0-1趟行程，统计上没有意义、
 流向图也看不清。北京市16个区是更合适的聚合粒度——`assign_beijing_district()`就是
 给OD分析脚本用的，把每个点分配到对应的区。
@@ -19,10 +19,10 @@ import numpy as np
 import geopandas as gpd
 import shapely
 
-_DEFAULT_SHP = os.path.join(os.path.dirname(os.path.abspath(__file__)), "boundary", "省.shp")
+_DEFAULT_SHP = os.path.join(os.path.dirname(os.path.abspath(__file__)), "boundary", "province.shp")
 BOUNDARY_SHP = os.environ.get("TAXI_BOUNDARY_SHP", _DEFAULT_SHP)
 
-_DEFAULT_DISTRICT_SHP = os.path.join(os.path.dirname(os.path.abspath(__file__)), "boundary", "县.shp")
+_DEFAULT_DISTRICT_SHP = os.path.join(os.path.dirname(os.path.abspath(__file__)), "boundary", "county.shp")
 DISTRICT_SHP = os.environ.get("TAXI_DISTRICT_SHP", _DEFAULT_DISTRICT_SHP)
 
 _beijing_polygon_cache = None
@@ -65,7 +65,7 @@ def load_beijing_polygon(shp_path=None):
 
 def beijing_mask(lon, lat, shp_path=None):
     """向量化返回布尔数组：每个(lon, lat)点是否落在北京市行政边界内(WGS84经纬度，
-    跟省.shp的坐标系一致，不需要投影)。"""
+    跟province.shp的坐标系一致，不需要投影)。"""
     polygon = load_beijing_polygon(shp_path)
     return shapely.contains_xy(polygon, lon, lat)
 

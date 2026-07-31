@@ -4,7 +4,7 @@ r"""
 (写GeoTIFF)。核函数/cell_size/search_radius跟arcpy版语义完全一致，见kde_utils.py
 顶部的说明。
 
-用北京市行政边界矢量(boundary/省.shp)做点在多边形判断筛点，取代粗糙的经纬度矩形框，
+用北京市行政边界矢量(boundary/province.shp)做点在多边形判断筛点，取代粗糙的经纬度矩形框，
 见boundary_utils.py顶部说明。
 
 用法:
