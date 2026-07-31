@@ -32,6 +32,34 @@ flowchart LR
 
 根目录的两个 notebook —— [`taxi_gps_pipeline_zh.ipynb`](taxi_gps_pipeline_zh.ipynb)（中文）和 [`taxi_gps_pipeline_en.ipynb`](taxi_gps_pipeline_en.ipynb)（英文）—— 是同一条 8 阶段流水线的单文件中英双语镜像（各 66 个 cell）。默认安全干跑模式（`EXECUTE_PIPELINE = False`），且会优雅跳过缺失的可选依赖，适合在深入各子模块脚本之前先通读一遍建立整体认识。
 
+## 亮点算法：拥堵触发的起讫点(OD)提取
+
+阶段4的核心思路在 [`pipeline/05_taxi_congestion_od_extraction/03_extract_od_trips.py`](pipeline/05_taxi_congestion_od_extraction/03_extract_od_trips.py)（`find_trips_for_vehicle` 函数）：一个轻量的三态状态机，把逐车辆的GPS点流转化为起讫点(OD)行程 —— 但只有"上客动作确实是被拥堵触发的"才计入一趟行程：
+
+- **起点(O)**：车辆从"空车"变为"载客"的那个点 —— 但**仅当**这次跳变前一个点被标记为 `congestion == 1` 时才成立。如果上客前没有处于拥堵状态，这次上客会被直接丢弃，不计入行程。
+- **终点(D)**：这段载客状态结束、变回空车后的第一个点 —— 这一步不要求拥堵。
+
+```mermaid
+stateDiagram-v2
+    [*] --> EmptyFree
+    EmptyFree: 空车·畅通
+    EmptyJam: 空车·拥堵
+    Occupied: 载客
+
+    EmptyFree --> EmptyJam: 拥堵标记 → 1
+    EmptyJam --> EmptyFree: 拥堵标记 → 0
+    EmptyJam --> Occupied: 上客(0→1) — 记为起点★
+    EmptyFree --> Occupied: 上客(0→1) — 丢弃，未满足拥堵前提
+    Occupied --> EmptyFree: 下客(1→0) — 记为终点★
+    Occupied --> EmptyJam: 下客(1→0) — 记为终点★
+```
+
+**为什么这个门槛有分析价值**：这个前提条件精确筛出了"乘客恰好是在出租车被堵住时上车"的那部分行程 —— 也正是后续 `07_optimal_routing`/`08_trajectory_optimal_path_intersection` 要检验"是否绕行"的目标群体，而不是把绕行信号稀释到所有行程里，无论它们最初是怎么开始的。
+
+**实现细节**：
+- 状态跳变边界用一次向量化的 `numpy.where(occ[1:] != occ[:-1])` diff 找出（每辆车只扫一次），而不是逐行Python循环判断，千万级GPS点也能跑得动。
+- 每趟行程还会标记 `is_plausible`：同时用haversine直线距离**和**时长上限来判断，而不是只看速度——曾经真实遇到过一次时间戳被错记成未来6年的bug，算出来的隐含平均速度只有约200米/小时（远低于150km/h的上限，只看速度的话会被判为"合理"），但这趟行程实际耗时其实是1.89亿秒（约6年）。正是这个单独的时长上限才兜住了这一类错误。
+
 ## 仓库结构
 
 ```

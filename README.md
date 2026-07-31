@@ -32,6 +32,34 @@ flowchart LR
 
 Two root-level notebooks, [`taxi_gps_pipeline_zh.ipynb`](taxi_gps_pipeline_zh.ipynb) (Chinese) and [`taxi_gps_pipeline_en.ipynb`](taxi_gps_pipeline_en.ipynb) (English), are a single-file, bilingual mirror of the exact same 8-stage pipeline (66 cells each). They default to a safe dry-run mode (`EXECUTE_PIPELINE = False`) and gracefully skip missing optional imports, so they're a good place to start reading before diving into the individual scripts.
 
+## Highlight algorithm: congestion-gated OD extraction
+
+The core idea of Stage 4 lives in [`pipeline/05_taxi_congestion_od_extraction/03_extract_od_trips.py`](pipeline/05_taxi_congestion_od_extraction/03_extract_od_trips.py) (`find_trips_for_vehicle`): a lightweight three-state state machine that turns a per-vehicle stream of GPS pings into origin–destination (OD) trips, but only counts a trip whose pickup was directly triggered by congestion:
+
+- **Origin (O)** — the point where a vehicle flips from empty to occupied, but *only* if the point immediately before that flip was flagged `congestion == 1`. A pickup not preceded by congestion is discarded outright, not counted as a trip.
+- **Destination (D)** — the first point after that occupied run flips back to empty; no congestion condition applies here.
+
+```mermaid
+stateDiagram-v2
+    [*] --> EmptyFree
+    EmptyFree: Empty, not congested
+    EmptyJam: Empty, congested
+    Occupied: Occupied (has passenger)
+
+    EmptyFree --> EmptyJam: congestion flag → 1
+    EmptyJam --> EmptyFree: congestion flag → 0
+    EmptyJam --> Occupied: pickup (0→1) — ORIGIN ★
+    EmptyFree --> Occupied: pickup (0→1) — discarded, no congestion precondition
+    Occupied --> EmptyFree: dropoff (1→0) — DESTINATION ★
+    Occupied --> EmptyJam: dropoff (1→0) — DESTINATION ★
+```
+
+**Why it matters analytically**: this precondition isolates exactly the subset of trips whose passenger was picked up *while the taxi was stuck in traffic* — precisely the population that `07_optimal_routing`/`08_trajectory_optimal_path_intersection` later test for abnormal detours, instead of diluting the detour signal across every trip regardless of how it started.
+
+**Implementation notes**:
+- Run boundaries are found with a single vectorized `numpy.where(occ[1:] != occ[:-1])` diff per vehicle instead of a row-by-row Python loop, so it scales to tens of millions of GPS points.
+- Every trip is also stamped `is_plausible` using haversine straight-line distance **and** a duration cap, not speed alone — a real corrupted-timestamp bug (+6 years) once produced a trip whose implied average speed was only ~200 meters/hour (comfortably under the 150 km/h ceiling, so a speed-only check would have called it "plausible"), even though the trip's duration was actually 189 million seconds (~6 years). The separate duration cap is what catches this class of error.
+
 ## Repository structure
 
 ```
