@@ -1,10 +1,12 @@
 <p align="right"><a href="README.md">English</a></p>
 
-# 北京出租车 GPS 拥堵绕行分析
+<h1 align="center">北京出租车 GPS 拥堵绕行分析</h1>
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)
-![GIS](https://img.shields.io/badge/domain-GIS%20%2F%20空间数据分析-green.svg)
+<p align="center">
+<img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License">
+<img src="https://img.shields.io/badge/python-3.9%2B-blue.svg" alt="Python">
+<img src="https://img.shields.io/badge/domain-GIS%20%2F%20空间数据分析-green.svg" alt="GIS">
+</p>
 
 一条 8 阶段的空间数据处理流水线，把北京出租车原始 GPS 轨迹逐步转化为**"拥堵引发绕行"的判定信号**：从千万级原始 GPS 定位点出发，提取持久性交通热点、识别拥堵路段、重建乘客上下车（OD）行程、匹配到实际路网、计算理论最优路径，最终标记出那些实际行驶距离显著超过理论最短路径的"绕行"行程。
 

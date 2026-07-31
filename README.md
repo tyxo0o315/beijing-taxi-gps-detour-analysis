@@ -1,10 +1,12 @@
 <p align="right"><a href="README.zh-CN.md">中文</a></p>
 
-# Beijing Taxi GPS Detour Analysis
+<h1 align="center">Beijing Taxi GPS Detour Analysis</h1>
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)
-![GIS](https://img.shields.io/badge/domain-GIS%20%2F%20Spatial%20Data%20Science-green.svg)
+<p align="center">
+<img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License">
+<img src="https://img.shields.io/badge/python-3.9%2B-blue.svg" alt="Python">
+<img src="https://img.shields.io/badge/domain-GIS%20%2F%20Spatial%20Data%20Science-green.svg" alt="GIS">
+</p>
 
 An 8-stage geospatial data pipeline that turns raw Beijing taxi GPS traces into a **congestion-induced detour signal**: from millions of raw GPS pings, it extracts persistent traffic hotspots, detects congestion segments, reconstructs origin-destination (OD) trips, matches them to the road network, computes theoretically optimal routes, and finally flags trips whose real trajectory was significantly longer than the shortest possible route.
 
