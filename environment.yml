@@ -1,0 +1,16 @@
+name: beijing-taxi-gps-detour-analysis
+channels:
+  - conda-forge
+dependencies:
+  - python>=3.9
+  - numpy
+  - pandas
+  - geopandas
+  - shapely
+  - pyproj
+  - pyogrio
+  - rasterio
+  - networkx
+  - matplotlib
+  - tqdm
+  - jupyter

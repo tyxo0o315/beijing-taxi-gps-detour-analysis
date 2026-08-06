@@ -89,7 +89,7 @@ Almost the entire pipeline is pure open-source Python (`geopandas`, `shapely`, `
 Install the core open-source dependencies with:
 
 ```bash
-pip install numpy pandas pyproj rasterio geopandas shapely networkx pyogrio tqdm
+pip install -r requirements.txt
 ```
 
 (`pipeline/02_density_hotspot_analysis_opensource/requirements.txt` lists the minimal set needed for that stage specifically.)
@@ -97,6 +97,14 @@ pip install numpy pandas pyproj rasterio geopandas shapely networkx pyogrio tqdm
 ## Data
 
 This repository does **not** contain any real/raw taxi trip GPS records — those are private and excluded on purpose. It only ships the public reference geodata the pipeline needs: Beijing province/county administrative boundaries (`02_density_hotspot_analysis_opensource/boundary/`) and a 2017 Beijing road network shapefile (`06_road_grade_matching/2017_Beijing_road.*`), plus a synthetic-data demo notebook (`05_taxi_congestion_od_extraction/notebook/taxi_od_pipeline_part1-5.ipynb`) you can run end-to-end without any real data.
+
+See [`DATA.md`](DATA.md) for the included/excluded data boundary, the dry-run path, and notes on third-party geospatial data terms.
+
+## Reproducibility checklist
+
+- `requirements.txt` and `environment.yml` provide root-level environment entry points.
+- The two master notebooks are safe to open in dry-run mode before configuring private data paths.
+- GitHub Actions compiles all Python scripts on every push/PR, catching syntax regressions without requiring private data or ArcGIS.
 
 ## License
 
